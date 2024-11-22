@@ -122,10 +122,16 @@ fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Ve
         let y = fragment.position.y as usize;
         if x < framebuffer.width && y < framebuffer.height {
             // Apply fragment shader
-            let shaded_color = fragment_shader(&fragment, &uniforms, id);
-            let color = shaded_color.to_hex();
-            framebuffer.set_current_color(color);
-            framebuffer.point(x, y, fragment.depth);
+            // if id == 0.0{
+            //     let color = fragment.color.to_hex();
+            //     framebuffer.set_current_color(color);
+            //     framebuffer.point(x, y, fragment.depth);
+            // }else{
+                let shaded_color = fragment_shader(&fragment, &uniforms, id);
+                let color = shaded_color.to_hex();
+                framebuffer.set_current_color(color);
+                framebuffer.point(x, y, fragment.depth);
+            // }
         }
     }
 }
@@ -240,7 +246,7 @@ fn main() {
     window.set_position(500, 500);
     window.update();
 
-    framebuffer.set_background_color(0x333355);
+    framebuffer.set_background_color(0x000000);
 
 
     let vertex_arrays_nave = nave.get_vertex_array(); 
@@ -255,9 +261,9 @@ fn main() {
 
 
         // model position
-    let mut translation = Vec3::new(0.0, 0.0, 5.0);
-    let mut rotation = Vec3::new(0.0, 0.0, 0.0);
-    let scale = 0.2;
+    let mut translation = Vec3::new(0.0, 0.0, 10.0);
+    let mut rotation = Vec3::new(0.0, -5.0, 0.0);
+    let scale = 0.1;
 
     let mut time = 0;
 
@@ -287,7 +293,7 @@ fn main() {
         // Renderizar la nave
         let model_matrix_nave = create_model_matrix(translation, scale, rotation);
         let uniforms_nave = Uniforms { model_matrix: model_matrix_nave, view_matrix, projection_matrix, viewport_matrix, time };
-        render(&mut framebuffer, &uniforms_nave, &vertex_arrays_nave, 0.0);
+        render(&mut framebuffer, &uniforms_nave, &vertex_arrays_nave, 1.0);
     
         // Renderizar los objetos con rotación orbital
         for (i, object) in objects.iter_mut().enumerate() {
@@ -337,62 +343,60 @@ fn handle_input(
     rotation: &mut Vec3,
 ) {
     let move_speed = 0.5;    // Velocidad de movimiento de la cámara
-    let rotation_speed = 0.5; // Velocidad de rotación de la nave
-
-    // Movimiento de la cámara (W, A, S, D, Q, E)
-    if window.is_key_down(Key::W) {
-        camera.eye.z -= move_speed;
-        translation.z -= move_speed; // Sincronizar nave
-    }
-    if window.is_key_down(Key::S) {
-        camera.eye.z += move_speed;
-        translation.z += move_speed; // Sincronizar nave
-    }
-    if window.is_key_down(Key::A) {
-        camera.eye.x -= move_speed;
-        translation.x -= move_speed; // Sincronizar nave
-        rotation.y += rotation_speed; // Rotación de la nave
-    }
-    if window.is_key_down(Key::D) {
-        camera.eye.x += move_speed;
-        translation.x += move_speed; // Sincronizar nave
-        rotation.y -= rotation_speed; // Rotación de la nave
-    }
-    if window.is_key_down(Key::Q) {
-        camera.eye.y += move_speed;
-        translation.y += move_speed; // Sincronizar nave
-    }
-    if window.is_key_down(Key::E) {
-        camera.eye.y -= move_speed;
-        translation.y -= move_speed; // Sincronizar nave
-    }
-
-    // Rotación de la cámara (teclas de flecha)
-    if window.is_key_down(Key::Up) {
-        rotation.x -= rotation_speed; // Rotar nave hacia abajo
-    }
-    if window.is_key_down(Key::Down) {
-        rotation.x += rotation_speed; // Rotar nave hacia arriba
-    }
+    let movement_speed = PI/100.0;
+    let rotation_speed = PI/100.0;
+    let zoom_speed = 0.1;
+   
+    let mut movement = Vec3::new(0.0, 0.0, 0.0);
+   
+    //  camera orbit controls
     if window.is_key_down(Key::Left) {
-        rotation.y -= rotation_speed; // Rotar nave hacia la izquierda
-    }
-    if window.is_key_down(Key::Right) {
-        rotation.y += rotation_speed; // Rotar nave hacia la derecha
-    }
+        camera.orbit(rotation_speed, 0.0);
+        movement.x -= movement_speed;
+        rotation.y -= PI / 100.0;
+        rotation.x -= PI / 100.0;
+      }
+      if window.is_key_down(Key::Right) {
+        camera.orbit(-rotation_speed, 0.0);
+        rotation.y += PI / 100.0;
+        rotation.x += PI / 100.0;
+      }
+      if window.is_key_down(Key::W) {
+        camera.orbit(0.0, -rotation_speed);
+      }
+      if window.is_key_down(Key::S) {
+        camera.orbit(0.0, rotation_speed);
+      }
+  
+      // Camera movement controls
+      if window.is_key_down(Key::A) {
+        movement.x -= movement_speed;
 
-    // Zoom in y out (teclas Z y X)
-    if window.is_key_down(Key::Z) {
-        camera.eye.z -= move_speed;
-        translation.z -= move_speed; // Sincronizar nave
-    }
-    if window.is_key_down(Key::X) {
-        camera.eye.z += move_speed;
-        translation.z += move_speed; // Sincronizar nave
-    }
+      }
+      if window.is_key_down(Key::D) {
+        movement.x += movement_speed;
+
+      }
+      if window.is_key_down(Key::Q) {
+        movement.y += movement_speed;
+      }
+      if window.is_key_down(Key::E) {
+        movement.y -= movement_speed;
+      }
+      if movement.magnitude() > 0.0 {
+        camera.move_center(movement);
+      }
+  
+      // Camera zoom controls
+      if window.is_key_down(Key::Up) {
+        camera.zoom(zoom_speed);
+      }
+      if window.is_key_down(Key::Down) {
+        camera.zoom(-zoom_speed);
+      }
 
     // Mantener la nave frente a la cámara
+    translation.y = camera.eye.y;
     translation.x = camera.eye.x;
-    translation.y = camera.eye.y - 0.5; // Ajuste para posición relativa
-    translation.z = camera.eye.z - 1.0; // Ajuste para mantenerla adelante
+    translation.z = camera.eye.z - 5.0; // Ajuste para mantenerla adelante
 }
