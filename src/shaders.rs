@@ -60,7 +60,7 @@ pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, id:f32) -> Colo
     // Agregar más shaders aquí según sea necesario
     _ => {
         // Por defecto, renderiza un shader genérico
-        Color::new(0, 0, 0) // Negro como fallback
+        Color::new(69, 146, 173 ) // Negro como fallback
     }
 }
     

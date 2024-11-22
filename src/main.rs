@@ -242,10 +242,6 @@ fn main() {
 
     framebuffer.set_background_color(0x333355);
 
-    // model position
-    let translation = Vec3::new(5.0, 0.0, 0.0);
-    let rotation = Vec3::new(0.0, 0.0, 0.0);
-    let scale = 1.0f32;
 
     let vertex_arrays_nave = nave.get_vertex_array(); 
 
@@ -256,6 +252,12 @@ fn main() {
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0)
     );
+
+
+        // model position
+    let mut translation = Vec3::new(0.0, 0.0, 5.0);
+    let mut rotation = Vec3::new(0.0, 0.0, 0.0);
+    let scale = 0.2;
 
     let mut time = 0;
 
@@ -272,7 +274,7 @@ fn main() {
         time += 1;
     
         // Manejo de entrada (teclas para mover la cámara)
-        handle_input(&window, &mut camera);
+        handle_input(&window, &mut camera, &mut translation, &mut rotation);
     
         // Limpia el framebuffer para el siguiente frame
         framebuffer.clear();
@@ -283,7 +285,7 @@ fn main() {
         let viewport_matrix = create_viewport_matrix(framebuffer_width as f32, framebuffer_height as f32);
     
         // Renderizar la nave
-        let model_matrix_nave = create_model_matrix(Vec3::new(5.0, 0.0, 0.0), 0.2, Vec3::new(0.0, 0.0, 0.0));
+        let model_matrix_nave = create_model_matrix(translation, scale, rotation);
         let uniforms_nave = Uniforms { model_matrix: model_matrix_nave, view_matrix, projection_matrix, viewport_matrix, time };
         render(&mut framebuffer, &uniforms_nave, &vertex_arrays_nave, 0.0);
     
@@ -328,50 +330,69 @@ fn main() {
 
 
 
-fn handle_input(window: &Window, camera: &mut Camera) {
-    let movement_speed = 1.0;
-    let rotation_speed = PI/50.0;
-    let zoom_speed = 0.1;
-   
-   
+fn handle_input(
+    window: &Window,
+    camera: &mut Camera,
+    translation: &mut Vec3,
+    rotation: &mut Vec3,
+) {
+    let move_speed = 0.5;    // Velocidad de movimiento de la cámara
+    let rotation_speed = 0.5; // Velocidad de rotación de la nave
 
-    //  camera orbit controls
-    if window.is_key_down(Key::Left) {
-      camera.orbit(rotation_speed, 0.0);
-    }
-    if window.is_key_down(Key::Right) {
-      camera.orbit(-rotation_speed, 0.0);
-    }
+    // Movimiento de la cámara (W, A, S, D, Q, E)
     if window.is_key_down(Key::W) {
-      camera.orbit(0.0, -rotation_speed);
+        camera.eye.z -= move_speed;
+        translation.z -= move_speed; // Sincronizar nave
     }
     if window.is_key_down(Key::S) {
-      camera.orbit(0.0, rotation_speed);
+        camera.eye.z += move_speed;
+        translation.z += move_speed; // Sincronizar nave
     }
-
-    // Camera movement controls
-    let mut movement = Vec3::new(0.0, 0.0, 0.0);
     if window.is_key_down(Key::A) {
-      movement.x -= movement_speed;
+        camera.eye.x -= move_speed;
+        translation.x -= move_speed; // Sincronizar nave
+        rotation.y += rotation_speed; // Rotación de la nave
     }
     if window.is_key_down(Key::D) {
-      movement.x += movement_speed;
+        camera.eye.x += move_speed;
+        translation.x += move_speed; // Sincronizar nave
+        rotation.y -= rotation_speed; // Rotación de la nave
     }
     if window.is_key_down(Key::Q) {
-      movement.y += movement_speed;
+        camera.eye.y += move_speed;
+        translation.y += move_speed; // Sincronizar nave
     }
     if window.is_key_down(Key::E) {
-      movement.y -= movement_speed;
-    }
-    if movement.magnitude() > 0.0 {
-      camera.move_center(movement);
+        camera.eye.y -= move_speed;
+        translation.y -= move_speed; // Sincronizar nave
     }
 
-    // Camera zoom controls
+    // Rotación de la cámara (teclas de flecha)
     if window.is_key_down(Key::Up) {
-      camera.zoom(zoom_speed);
+        rotation.x -= rotation_speed; // Rotar nave hacia abajo
     }
     if window.is_key_down(Key::Down) {
-      camera.zoom(-zoom_speed);
+        rotation.x += rotation_speed; // Rotar nave hacia arriba
     }
+    if window.is_key_down(Key::Left) {
+        rotation.y -= rotation_speed; // Rotar nave hacia la izquierda
+    }
+    if window.is_key_down(Key::Right) {
+        rotation.y += rotation_speed; // Rotar nave hacia la derecha
+    }
+
+    // Zoom in y out (teclas Z y X)
+    if window.is_key_down(Key::Z) {
+        camera.eye.z -= move_speed;
+        translation.z -= move_speed; // Sincronizar nave
+    }
+    if window.is_key_down(Key::X) {
+        camera.eye.z += move_speed;
+        translation.z += move_speed; // Sincronizar nave
+    }
+
+    // Mantener la nave frente a la cámara
+    translation.x = camera.eye.x;
+    translation.y = camera.eye.y - 0.5; // Ajuste para posición relativa
+    translation.z = camera.eye.z - 1.0; // Ajuste para mantenerla adelante
 }
