@@ -1,6 +1,7 @@
 use nalgebra_glm::{look_at, perspective, Mat4, Vec3, Vec4};
 use minifb::{Key, Window, WindowOptions};
 use std::f32::consts::PI;
+use rand::Rng;
 
 mod framebuffer;
 mod triangle;
@@ -89,6 +90,18 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
     )
 }
 
+fn generate_stars(num_stars: usize, width: usize, height: usize) -> Vec<(usize, usize)> {
+    let mut rng = rand::thread_rng();
+    (0..num_stars)
+        .map(|_| {
+            (
+                rng.gen_range(0..width),  // Posición X de la estrella
+                rng.gen_range(0..height) // Posición Y de la estrella
+            )
+        })
+        .collect()
+}
+
 fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], id: f32) {
     
     // Vertex Shader Stage
@@ -152,6 +165,7 @@ fn main() {
     let obj = Obj::load("assets/sphere.obj").expect("Failed to load obj");
     let obj2 = Obj::load("assets/rings.obj").expect("Failed to load obj");
     let nave = Obj::load("assets/nave.obj").expect("Failed to load obj");
+    let mut eye = false; 
 
     let mut objects = vec![
         // sol
@@ -164,7 +178,7 @@ fn main() {
         },
         // luna
         SceneObject {
-            translation: Vec3::new(3.5, 2.5, 0.0),
+            translation: Vec3::new(6.5, 7.5, 0.0),
             rotation: Vec3::new(0.0, PI / 4.0, 0.0),
             scale: 0.3,
             vertex_array: obj.get_vertex_array(), // Reutilizando el mismo modelo
@@ -172,7 +186,7 @@ fn main() {
         },
         
         SceneObject {
-            translation: Vec3::new(3.0, 2.0, 0.0),
+            translation: Vec3::new(6.0, 7.0, 0.0),
             rotation: Vec3::new(0.0, PI / 4.0, 0.0),
             scale: 1.0,
             vertex_array: obj.get_vertex_array(), // Reutilizando el mismo modelo
@@ -180,7 +194,7 @@ fn main() {
         },
        
         SceneObject {
-            translation: Vec3::new(3.0, 1.0, 2.0),
+            translation: Vec3::new(8.0, 6.0, 7.0),
             rotation: Vec3::new(0.0, PI / 4.0, 0.0),
             scale: 1.0,
             vertex_array: obj.get_vertex_array(), // Reutilizando el mismo modelo
@@ -188,7 +202,7 @@ fn main() {
         },
 
         SceneObject {
-            translation: Vec3::new(-3.0, 2.0, 0.3),
+            translation: Vec3::new(-8.0, 0.0, -2.3),
             rotation: Vec3::new(0.0, PI / 4.0, 0.0),
             scale: 0.7,
             vertex_array: obj.get_vertex_array(), // Reutilizando el mismo modelo
@@ -196,7 +210,7 @@ fn main() {
         },
 
         SceneObject {
-            translation: Vec3::new(-3.0, 0.0, -1.3),
+            translation: Vec3::new(-4.0, -1.0, -2.3),
             rotation: Vec3::new(0.0, PI / 4.0, 0.0),
             scale: 0.7,
             vertex_array: obj.get_vertex_array(), // Reutilizando el mismo modelo
@@ -205,7 +219,7 @@ fn main() {
         
 
         SceneObject {
-            translation: Vec3::new(-1.3, 3.0, 5.3),
+            translation: Vec3::new(-5.3, 5.0, 7.3),
             rotation: Vec3::new(0.0, PI / 4.0, 0.0),
             scale: 1.3,
             vertex_array: obj.get_vertex_array(), // Reutilizando el mismo modelo
@@ -221,7 +235,7 @@ fn main() {
         },
         SceneObject {
             translation: Vec3::new(4.3, 1.0, -3.3),
-            rotation: Vec3::new(0.3, PI / 4.0, 0.0),
+            rotation: Vec3::new(0.5, PI / 4.0, 0.0),
             scale: 0.8,
             vertex_array: obj2.get_vertex_array(), // Reutilizando el mismo modelo
             id: 5.0,
@@ -233,10 +247,11 @@ fn main() {
     let window_height = 600;
     let framebuffer_width = 800;
     let framebuffer_height = 600;
+    let stars = generate_stars(500, framebuffer_width, framebuffer_height);
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
     let mut window = Window::new(
-        "Shaders",
+        "Sistema solar",
         window_width,
         window_height,
         WindowOptions::default(),
@@ -254,7 +269,7 @@ fn main() {
 
     // camera parameters
     let mut camera = Camera::new(
-        Vec3::new(0.0, 0.0, 10.0),
+        Vec3::new(0.0, 0.0, 20.0),
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0)
     );
@@ -269,8 +284,9 @@ fn main() {
 
     // Ángulos de rotación
     let mut angles = vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
-    let rotation_speeds = vec![0.00001, 0.00002, 0.00002, 0.00001, 0.00002, 0.00005,0.00001, 0.00002, 0.00002];
+    let rotation_speeds = vec![0.000001, 0.000002, 0.000002, 0.000001, 0.000002, 0.000005,0.000001, 0.000002, 0.000002];
 
+    let mut mouse_activado= false; 
 
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
@@ -280,11 +296,11 @@ fn main() {
         time += 1;
     
         // Manejo de entrada (teclas para mover la cámara)
-        handle_input(&window, &mut camera, &mut translation, &mut rotation);
+        eye = handle_input(&window, &mut camera, &mut translation, &mut rotation, &mut eye, &mut mouse_activado);
     
         // Limpia el framebuffer para el siguiente frame
         framebuffer.clear();
-    
+        framebuffer.draw_stars(&stars); 
         // Calcula las matrices de cámara
         let view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
         let projection_matrix = create_perspective_matrix(window_width as f32, window_height as f32);
@@ -293,7 +309,9 @@ fn main() {
         // Renderizar la nave
         let model_matrix_nave = create_model_matrix(translation, scale, rotation);
         let uniforms_nave = Uniforms { model_matrix: model_matrix_nave, view_matrix, projection_matrix, viewport_matrix, time };
-        render(&mut framebuffer, &uniforms_nave, &vertex_arrays_nave, 1.0);
+        if !eye{
+            render(&mut framebuffer, &uniforms_nave, &vertex_arrays_nave, 1.0);
+        }
     
         // Renderizar los objetos con rotación orbital
         for (i, object) in objects.iter_mut().enumerate() {
@@ -314,7 +332,6 @@ fn main() {
     
             // Crea la matriz del modelo del objeto
             let model_matrix = create_model_matrix(object.translation, object.scale, object.rotation);
-    
             // Define los uniformes
             let uniforms = Uniforms {
                 model_matrix,
@@ -341,14 +358,67 @@ fn handle_input(
     camera: &mut Camera,
     translation: &mut Vec3,
     rotation: &mut Vec3,
-) {
+    eye: &mut bool,
+    mouse: &mut bool, 
+)-> bool {
     let move_speed = 0.5;    // Velocidad de movimiento de la cámara
-    let movement_speed = PI/100.0;
-    let rotation_speed = PI/100.0;
-    let zoom_speed = 0.1;
-   
+    let movement_speed = PI/150.0;
+    let rotation_speed = PI/150.0;
+    let zoom_speed = 0.03;
+    
+    let mut last_mouse_x: Option<f64> = None;
+    let mut last_mouse_y: Option<f64> = None;
+    let sensitivity = 0.005; // Sensibilidad del mouse
+    
     let mut movement = Vec3::new(0.0, 0.0, 0.0);
-   
+
+    // Movimiento del mouse
+    if window.is_key_down(Key::O) {
+        
+        *eye = true; 
+    }
+    
+    if let Some((current_x, current_y)) = window.get_mouse_pos(minifb::MouseMode::Pass) {
+        // Si esta es la primera vez que capturamos la posición del mouse, inicializamos las últimas posiciones
+        if last_mouse_x.is_none() || last_mouse_y.is_none() {
+            last_mouse_x = Some(current_x as f64);
+            last_mouse_y = Some(current_y as f64);
+        }
+    
+        if let (Some(last_x), Some(last_y)) = (last_mouse_x, last_mouse_y) {
+            // Calcular el movimiento relativo del mouse
+            let delta_x = (current_x as f32 - last_x as f32) * sensitivity;
+            let delta_y = (current_y as f32 - last_y as f32) * sensitivity;
+    
+                // Rotar la cámara horizontalmente (giro en el eje Y)
+                rotation.y += delta_x;
+    
+                // Rotar la cámara verticalmente (giro en el eje X)
+                rotation.x += delta_y;
+    
+                // Limitar la rotación vertical (pitch) para evitar giros extremos
+                rotation.x = rotation.x.clamp(-PI / 2.0, PI / 2.0);
+    
+                // Calcular la nueva dirección de la cámara basada en las rotaciones
+                // print!("{} {}", last_x, "-");
+                if last_x < 300.0{
+                    movement.x -= rotation.x;
+                    rotation.y -= PI / 100.0;
+                    rotation.x -= PI / 100.0;
+                }
+                if last_x > 600.0 {
+                    movement.x += rotation.x;
+                    rotation.y += PI / 100.0;
+                    rotation.x += PI / 100.0;
+                }
+        }
+    
+        // Actualizar la última posición del mouse
+        last_mouse_x = Some(current_x as f64);
+        last_mouse_y = Some(current_y as f64);
+    }
+    
+    
     //  camera orbit controls
     if window.is_key_down(Key::Left) {
         camera.orbit(rotation_speed, 0.0);
@@ -386,6 +456,17 @@ fn handle_input(
       if movement.magnitude() > 0.0 {
         camera.move_center(movement);
       }
+      if window.is_key_down(Key::M) {
+        *eye = true; 
+        camera.zoom(-1.0);
+
+        camera.orbit(0.0, -0.19);
+      }
+      if window.is_key_down(Key::N){
+        *eye = false; 
+        camera.orbit(0.0, 0.2);
+      }
+      
   
       // Camera zoom controls
       if window.is_key_down(Key::Up) {
@@ -394,9 +475,23 @@ fn handle_input(
       if window.is_key_down(Key::Down) {
         camera.zoom(-zoom_speed);
       }
+      if window.is_key_down(Key::Key1) {
+        camera.zoom(-zoom_speed);
+      }
+
+    //  planetas
+    // if window.is_key_down(Key::Key2) {
+    //     camera.mover_camara(camera.eye,Vec3::new(6.5, 7.5, 0.0), camera.up); 
+    //     *eye = true; 
+    //     camera.zoom(0.9);
+    //     // 4.3, 1.0, -3.3 Ve3::new(0.0, 0.0, 20.0),
+    //     // Vec3::new(0.0, 0.0, 0.0),
+    //     // Vec3::new(0.0, 1.0, 0.0)
+    //   }
 
     // Mantener la nave frente a la cámara
     translation.y = camera.eye.y;
     translation.x = camera.eye.x;
-    translation.z = camera.eye.z - 5.0; // Ajuste para mantenerla adelante
+    translation.z = camera.eye.z - 3.0; // Ajuste para mantenerla adelante
+    *eye
 }

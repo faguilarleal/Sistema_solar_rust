@@ -18,6 +18,13 @@ impl Camera {
     }
   }
 
+  pub fn mover_camara(&mut self, n_eye: Vec3, n_center: Vec3, n_up: Vec3){
+    self.eye = n_eye; 
+    self.center = n_center; 
+    self.up = n_up;
+    self.has_changed = true;
+  }
+
   pub fn basis_change(&self, vector: &Vec3) -> Vec3 {
     let forward = (self.center - self.eye).normalize();
     let right = forward.cross(&self.up).normalize();
@@ -83,4 +90,9 @@ impl Camera {
       false
     }
   }
+
+  
+
+    
 }
+

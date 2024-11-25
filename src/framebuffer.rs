@@ -44,25 +44,18 @@ impl Framebuffer {
 
     pub fn set_background_color(&mut self, color: u32) {
         self.background_color = color;
-        self.set_background_with_stars(0xFFFFFF, 100);
     }
 
     pub fn set_current_color(&mut self, color: u32) {
         self.current_color = color;
     }
 
-    pub fn set_background_with_stars(&mut self, star_color: u32, num_stars: usize) {
-        // Limpia el framebuffer con el color de fondo
-        for pixel in self.buffer.iter_mut() {
-            *pixel = self.background_color;
-        }
-
-        // Genera estrellas aleatorias
-        let mut rng = rand::thread_rng();
-        for _ in 0..num_stars {
-            let x = rng.gen_range(0..self.width); // Genera coordenada x aleatoria dentro del ancho
-            let y = rng.gen_range(0..self.height); // Genera coordenada y aleatoria dentro del alto
-            self.buffer[y * self.width + x] = star_color; // Dibuja la estrella en el buffer
+    pub fn draw_stars(&mut self, stars: &[(usize, usize)]) {
+        for &(x, y) in stars {
+            if x < self.width && y < self.height {
+                let index = y * self.width + x;
+                self.buffer[index] = 0xFFFFFF; // Color blanco para las estrellas
+            }
         }
     }
 
