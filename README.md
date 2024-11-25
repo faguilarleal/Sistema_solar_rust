@@ -20,13 +20,11 @@ Una vez dentro del programa, puedes interactuar con los planetas utilizando los 
 **Movimiento de Cámara**
 - Flecha Izquierda: Mueve la cámara hacia la izquierda.  
 - Flecha Derecha: Mueve la cámara hacia la derecha.  
-- Flecha Arriba: Mueve la cámara hacia arriba.  
-- Flecha Abajo: Mueve la cámara hacia abajo.
 
       
 **Zoom** 
-- Q: Acercar (Zoom in).  
-- E: Alejar (Zoom out).
+- Fekcga arriba: Acercar (Zoom in).  
+- Flecha abajo: Alejar (Zoom out).
 
 
 **Rotación del planeta**
@@ -36,9 +34,18 @@ Una vez dentro del programa, puedes interactuar con los planetas utilizando los 
 - S: Rotar la nave hacia abajo (eje X).
 
 
+*Sky eye**
+- M: activar la vista de sky eye
+- N: desactivar la vista de sky eye
+
+  
+**Rotación de la nave**
+- El mouse puede mover la nave de izquierda a derecha y viseversa 
+
+
 **Salir**  
 Escape: Cierra la aplicación.      
 
 
 ## Video de demostracion
-https://youtu.be/44_WpYVPErU 
+[https://youtu.be/44_WpYVPErU ](https://youtu.be/tFU4RWlW9IU)
